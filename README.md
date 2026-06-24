@@ -1,27 +1,61 @@
 # review-skill
 
-A [Claude Code](https://claude.com/claude-code) skill for **reliably verifying frontend/UI changes in a running app** — the kind driven by a hot-reload dev server and a mock API (e.g. MSW), checked via browser automation (Puppeteer/Playwright).
+[Claude Code](https://claude.com/claude-code) skills for reviewing a **DemarcoDS / `Bancodoc.Interface`** (Angular/Nx) feature module against the Design System — and verifying the fixes.
 
-## What it solves
+| Skill | O que faz |
+|---|---|
+| **`auditing-design-system-compliance`** | Varre o módulo procurando o que está **fora do padrão do DS** (toasts, modais, botões/ações, validação, tabelas, breadcrumb) e reporta **`fora do padrão → o padrão é → a correção`** com `arquivo:linha` e severidade. |
+| **`verifying-ui-in-running-app`** | Como **verificar** uma mudança de UI na app rodando (dev server + mock API) sem cair nas armadilhas de bundle stale / change detection. Usada depois de aplicar as correções. |
 
-When a UI change "doesn't show up" or your automated check passes/fails in a way that contradicts the code, the problem is often **not the code** — it's the verification setup lying to you:
+## Como a auditoria funciona
 
-- **Stale bundle:** a compile error makes the watch dev-server keep serving the *last good* bundle. The app still returns `200`, so it "looks up" — but your change isn't there. **A 200 is not proof your code compiled.**
-- **Out-of-zone automation:** synthetic events inside `page.evaluate` mutate the DOM but don't trigger the framework's change detection. Drive with **trusted** events (real click/type/fill); use `evaluate` only to *read* state.
-- **Mock-API signals:** a `200` only proves interception, not that your scenario works; in-memory DBs reset on reload — seed deterministically.
-- **Angular OnPush form gotchas:** whitespace passes `required`; `markAllAsTouched()` doesn't emit `statusChanges`; `setErrors()` does.
+A skill **não infere o padrão a partir do módulo auditado**. Ela ancora o padrão em duas fontes:
+- O **Design System**: `libs/ui`.
+- As telas de referência maduras: **`apps/empresas` (clientes)** e **`apps/servicos` (documentos)**.
+
+O módulo auditado deve **espelhar** essas referências, não reinventar componentes próprios. Para cada desvio, reporta o que faz, o padrão correto (com a referência) e a correção.
+
+## Os padrões que a skill verifica
+
+### Toasts
+- **Sucesso:** título `"[Item] [ação]"` (ex.: `Usuário cadastrado`, `Perfil salvo`, `Grupo excluído`), **sem subtítulo**.
+- **Erro:** `"Não foi possível [ação] o [item]"` + detalhe no subtítulo.
+- **Info/bloqueio:** `"Sem permissão"` + motivo.
+- 🚩 Fora do padrão: títulos genéricos `Sucesso`/`Erro`, `"...com sucesso"`, e **feedback de campo obrigatório em toast** (deve ser helper text no campo).
+
+### Modais (usar o componente do DS, não rolar o próprio)
+- **Excluir (sem vínculo):** "Atenção!" vermelho + ícone lixeira + texto irreversível + `[Cancelar][Confirmar]`.
+- **Bloqueio por vínculo:** "Atenção!" + `dm-data-table` paginada dos vinculados + só `[Voltar]`.
+- **Sair sem salvar:** `ExitConfirmationDialogComponent` do DS (primária = "Continuar editando").
+- **Confirmação genérica:** `dm-dialog-alert-template`, dialog `md`, botões `sm`.
+- **Vinculação:** `dm-data-table` + busca + alerta `notify`/`bell` + botão **"Salvar" sempre ativo**.
+
+### Botões / ações
+- Gerenciar registro = ação única **"Gerenciar"** (não "Visualizar"/"Editar"); somente-leitura via permissão.
+- Confirmar em modal de vinculação = **"Salvar"**.
+
+### Validação de formulário
+- **Required** = `DmValidators.required` (trata espaço como vazio).
+- Submit inválido → util **`markAllAsTouched`** do DS (renderiza erro sob OnPush + scroll).
+- Mensagem **"Campo obrigatório."**; em **tabela obrigatória**, exibida **abaixo da tabela**.
+- Erro de servidor (duplicado 409) → `setErrors` no campo (não toast).
+
+### Tabelas / navegação
+- Título da listagem **"[Item]s cadastrados"**; `pageSize` **10**; empty state "Ops, não existem registros cadastrados!".
+- Breadcrumb começa pelo módulo (ex.: "Empresa"); textos acentuados.
+
+> ⚠️ A skill separa **inconsistência de Design System** de **regra de negócio** (ex.: "um grupo pode ser excluído com vínculo" é decisão de produto, não desvio de DS).
 
 ## Install
 
-Copy the skill folder into your personal Claude Code skills directory:
-
 ```bash
 git clone https://github.com/paulovictordsz/review-skill.git
-cp -r review-skill/verifying-ui-in-running-app ~/.claude/skills/
+cp -r review-skill/auditing-design-system-compliance ~/.claude/skills/
+cp -r review-skill/verifying-ui-in-running-app    ~/.claude/skills/
 ```
 
-The skill loads automatically when the triggering conditions match.
+As skills carregam automaticamente quando o contexto bate (ex.: "está no padrão?", "revisa o módulo", "padroniza").
 
-## How it was built
+## Como foram construídas
 
-Authored with the TDD-for-skills process (RED → GREEN): a baseline agent *without* the skill buried the stale-bundle trap; *with* the skill it leads with "run the build first."
+Autoradas com o processo TDD-for-skills (RED → GREEN): rodar um agente sem a skill (baseline), ver onde ele falha, escrever a skill mirando essas falhas, validar que um agente com a skill passa a acertar.
