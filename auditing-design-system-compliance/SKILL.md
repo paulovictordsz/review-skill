@@ -21,11 +21,45 @@ Audit a feature module against the project's Design System and reference screens
 ## The standards (what to check)
 
 ### 1. Toasts
-- **Sucesso:** título `"[Item] [ação no particípio]"`, **sem subtítulo** (a versão reduzida do toast é só título — omitir `message`). Ex.: `Usuário cadastrado`, `Perfil salvo`, `Grupo excluído`, `Convite reenviado`, `Perfil vinculado`/`Perfis vinculados`.
+- **Sucesso:** título `"[Entidade] [ação no particípio]!"`, **sem subtítulo** (a versão reduzida do toast é só título — omitir `message`).
 - **Erro:** título `"Não foi possível [ação] o [item]"` + subtítulo com o erro real.
 - **Info/bloqueio:** `"Sem permissão"` / título curto + subtítulo com o motivo.
 - 🚩 Anti-padrões: títulos genéricos `"Sucesso"`/`"Erro"`; mensagens `"...com sucesso"`; **feedback de campo obrigatório em toast** (deve ser helper text no campo).
 - Grep: `title: 'Sucesso'`, `title: 'Erro'`, `com sucesso`.
+
+#### Vocabulário do toast de sucesso por comportamento
+O particípio segue a **ação** (não um genérico "salvo") e **concorda em gênero** com a entidade. Sempre termina com **"!"**.
+
+| Comportamento | Particípio (masc. / fem.) | Exemplos reais |
+|---|---|---|
+| **Cadastro / inserção** | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!", "Categoria de dívida inserida!", "Cargo para análise inserido!" |
+| **Edição** | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!", "Fundamento de identificação editado!" |
+| **Exclusão** | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!", "Cargo para análise excluído!" |
+| **Renomeação** | `renomeado` / `renomeada` | "Tipo de orientação renomeado!", "Categoria de procedimento renomeada!" |
+| **Vinculação** | `vinculado` / `vinculada` (+ plural) | "Pesquisa vinculada!", "Pesquisas vinculadas!", "Regra vinculada!", "Regras vinculadas!" |
+| **Exportação** | (entidade fixa) | "Arquivo exportado!" |
+
+Regras de redação:
+- **Concordância de gênero** com o substantivo da entidade: *Categoria…* → `inserida/editada/excluída/renomeada`; *Tipo…/Fundamento…/Momento…/Cargo…* → `inserido/editado/excluído/renomeado`.
+- **Plural** quando a ação atinge vários itens: `Pesquisas vinculadas!`, `Regras vinculadas!`.
+- 🚩 Anti-padrões adicionais: usar `cadastrado`/`salvo` genérico quando o comportamento é inserir/editar/renomear; faltar o `!` final; gênero trocado ("Categoria … inserido!"); plural errado.
+
+#### Como auditar toasts de sucesso (passo a passo)
+Não basta olhar o texto isolado — o particípio correto depende da **ação** que o handler executa. Para cada toast:
+
+1. **Encontre todos os toasts de sucesso.** Grep: `toastService.success(` (e variações `.success({`). Audite **cada ocorrência**, não só as que "parecem erradas".
+2. **Classifique o comportamento pela ação do handler** (leia o método que chama o toast — não adivinhe pelo texto atual):
+   - cria registro novo (POST / `create…` / `inserir…`) → **inserção** → `inserido/inserida`
+   - atualiza registro existente (PUT/PATCH / `update…` / `editar…`) → **edição** → `editado/editada`
+   - altera **só o nome** (rename inline / `renomear…`) → **renomeação** → `renomeado/renomeada`
+   - associa itens entre entidades (vincular / `vincular…` / `link…`) → **vinculação** → `vinculado/vinculada`
+   - remove registro (DELETE / `excluir…` / `remover…`) → **exclusão** → `excluído/excluída`
+   - gera/baixa arquivo (export / download) → **exportação** → `Arquivo exportado!`
+3. **Determine o gênero do substantivo-núcleo da entidade** (o primeiro substantivo do nome, ignorando complementos): *Categoria* de dívida → **feminino** (`a`); *Tipo* de documento → **masculino** (`o`); *Orientação* geral → feminino; *Fundamento* de identificação → masculino. Concorde o particípio com esse núcleo.
+4. **Decida singular vs. plural** pela quantidade que a ação atinge: uma → singular; várias → plural (`Pesquisas vinculadas!`).
+5. **Monte o título** `"[Entidade] [particípio]!"` e compare com o atual. Reporte como desvio se: verbo errado para o comportamento (ex.: `salvo`/`cadastrado` numa edição), gênero/plural trocado, ou falta o `!`.
+
+> ⚠️ Conflito comum: a regra geral antiga usava `cadastrado`. O vocabulário atual usa **`inserido`** para criação. Ao auditar, **prefira o vocabulário por comportamento** acima.
 
 ### 2. Modais — usar o componente certo do DS, não rolar o próprio
 - **Confirmar exclusão (sem vínculo):** título **"Atenção!"** vermelho + ícone `trash` (`bg-error-100`/`text-error-500`) + texto de ação irreversível + `[Cancelar] [Confirmar]`.

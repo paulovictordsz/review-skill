@@ -18,10 +18,21 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 ## Os padrões que a skill verifica
 
 ### Toasts
-- **Sucesso:** título `"[Item] [ação]"` (ex.: `Usuário cadastrado`, `Perfil salvo`, `Grupo excluído`), **sem subtítulo**.
+- **Sucesso:** título `"[Entidade] [ação no particípio]!"`, **sem subtítulo**. O particípio segue o **comportamento** e **concorda em gênero** com a entidade:
+
+  | Comportamento | Particípio (masc. / fem.) | Exemplos |
+  |---|---|---|
+  | Cadastro / inserção | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!" |
+  | Edição | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!" |
+  | Exclusão | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!" |
+  | Renomeação | `renomeado` / `renomeada` | "Tipo de orientação renomeado!", "Categoria de procedimento renomeada!" |
+  | Vinculação | `vinculado` / `vinculada` (+ plural) | "Regra vinculada!", "Pesquisas vinculadas!" |
+  | Exportação | (fixo) | "Arquivo exportado!" |
+
+  Para auditar: ache todo `toastService.success(`, classifique o comportamento pela **ação do handler** (POST=inserção, PUT/PATCH=edição, rename=renomeação, vincular=vinculação, DELETE=exclusão), concorde o gênero pelo substantivo-núcleo da entidade e termine com `!`.
 - **Erro:** `"Não foi possível [ação] o [item]"` + detalhe no subtítulo.
 - **Info/bloqueio:** `"Sem permissão"` + motivo.
-- 🚩 Fora do padrão: títulos genéricos `Sucesso`/`Erro`, `"...com sucesso"`, e **feedback de campo obrigatório em toast** (deve ser helper text no campo).
+- 🚩 Fora do padrão: títulos genéricos `Sucesso`/`Erro`, `"...com sucesso"`, `cadastrado`/`salvo` genérico onde o comportamento pede `inserido`/`editado`/`renomeado`, gênero/plural trocado, falta de `!`, e **feedback de campo obrigatório em toast** (deve ser helper text no campo).
 
 ### Modais (usar o componente do DS, não rolar o próprio)
 - **Excluir (sem vínculo):** "Atenção!" vermelho + ícone lixeira + texto irreversível + `[Cancelar][Confirmar]`.
