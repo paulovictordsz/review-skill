@@ -1,6 +1,6 @@
 ---
 name: auditing-design-system-compliance
-description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project for design-system consistency — toasts, modals (which component and which pattern), button/action naming, form validation, tables, breadcrumbs — and to report what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo".
+description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project for design-system consistency — toasts (incl. "salvo" form vs "inserido/editado" inline), modals (which component/pattern, incl. danger removal variant), button/action naming, form validation & duplicate-name messages, tables, breadcrumbs, form layout (header on edit, footer, gap-8/space-y-8 spacing), clickable-count→modal links (dmLinkButton), and tooltip-on-title vs alert — reporting what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo".
 ---
 
 # Auditing Design-System Compliance (DemarcoDS)
@@ -28,11 +28,17 @@ Audit a feature module against the project's Design System and reference screens
 - Grep: `title: 'Sucesso'`, `title: 'Erro'`, `com sucesso`.
 
 #### Vocabulário do toast de sucesso por comportamento
-O particípio segue a **ação** (não um genérico "salvo") e **concorda em gênero** com a entidade. Sempre termina com **"!"**.
+O particípio segue a **ação** e **concorda em gênero** com a entidade. Sempre termina com **"!"**.
+
+> **Distinção crítica — "salvo" (formulário) vs "inserido/editado" (grid inline):**
+> - **Salvar uma entidade via formulário** (botão "Salvar" de um form de página, handler único que faz create OU edit) → **`[Entidade] salvo!`** (ex.: `Grupo salvo!`, `Perfil salvo!`, `Usuário salvo!`). Referência: `empresas` (`clienteSalvo`, `usuarioSalvo`).
+> - **CRUD inline em grid/lista** (adicionar/editar/renomear um item dentro de uma tabela, sem sair da tela) → **`inserido!/editado!/renomeado!`**. Referência: `servicos` (categorias, fundamentos).
+> 🚩 Não use `inserido`/`editado`/`cadastrado` no toast de um **formulário** de entidade — ali é `salvo!`.
 
 | Comportamento | Particípio (masc. / fem.) | Exemplos reais |
 |---|---|---|
-| **Cadastro / inserção** | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!", "Categoria de dívida inserida!", "Cargo para análise inserido!" |
+| **Salvar entidade (formulário)** | `salvo` / `salva` | "Grupo salvo!", "Perfil salvo!", "Usuário salvo!" |
+| **Inserção inline (grid)** | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!", "Categoria de dívida inserida!", "Cargo para análise inserido!" |
 | **Edição** | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!", "Fundamento de identificação editado!" |
 | **Exclusão** | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!", "Cargo para análise excluído!" |
 | **Renomeação** | `renomeado` / `renomeada` | "Tipo de orientação renomeado!", "Categoria de procedimento renomeada!" |
@@ -49,7 +55,8 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 
 1. **Encontre todos os toasts de sucesso.** Grep: `toastService.success(` (e variações `.success({`). Audite **cada ocorrência**, não só as que "parecem erradas".
 2. **Classifique o comportamento pela ação do handler** (leia o método que chama o toast — não adivinhe pelo texto atual):
-   - cria registro novo (POST / `create…` / `inserir…`) → **inserção** → `inserido/inserida`
+   - **save de formulário de entidade** (handler único `save…`/`create…`+`update…` por trás do botão "Salvar" da página) → **`[Entidade] salvo!`**
+   - cria registro novo **inline em grid** (`inserir…` numa tabela, sem sair da tela) → **inserção** → `inserido/inserida`
    - atualiza registro existente (PUT/PATCH / `update…` / `editar…`) → **edição** → `editado/editada`
    - altera **só o nome** (rename inline / `renomear…`) → **renomeação** → `renomeado/renomeada`
    - associa itens entre entidades (vincular / `vincular…` / `link…`) → **vinculação** → `vinculado/vinculada`
@@ -59,27 +66,32 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 4. **Decida singular vs. plural** pela quantidade que a ação atinge: uma → singular; várias → plural (`Pesquisas vinculadas!`).
 5. **Monte o título** `"[Entidade] [particípio]!"` e compare com o atual. Reporte como desvio se: verbo errado para o comportamento (ex.: `salvo`/`cadastrado` numa edição), gênero/plural trocado, ou falta o `!`.
 
-> ⚠️ Conflito comum: a regra geral antiga usava `cadastrado`. O vocabulário atual usa **`inserido`** para criação. Ao auditar, **prefira o vocabulário por comportamento** acima.
+> ⚠️ Conflito comum: `cadastrado` genérico está errado. Use **`salvo!`** no toast de um **formulário** de entidade e **`inserido!/editado!/renomeado!`** apenas para **CRUD inline em grid** (ver distinção acima).
 
 ### 2. Modais — usar o componente certo do DS, não rolar o próprio
 - **Confirmar exclusão (sem vínculo):** título **"Atenção!"** vermelho + ícone `trash` (`bg-error-100`/`text-error-500`) + texto de ação irreversível + `[Cancelar] [Confirmar]`.
+- **Remover vínculo / excluir registro (variante `danger`):** mesmo visual **"Atenção!"** vermelho + `trash` + `bg-error-100` + `[Cancelar] [Confirmar]`. Texto no padrão do DS: **`Ao clicar em "Confirmar", você concorda que [o item] vinculado será removido [do contexto].`** (concordância de gênero/número). Num dialog genérico parametrizável, exponha uma variante `danger` em vez de criar outro componente.
+- **Mudança de status (desativar/ativar):** confirmação **neutra** (ícone `warning`, `dm-dialog-alert-template`), **não** `danger` — vermelho/trash é só para **remoção/exclusão**.
 - **Bloqueio por vínculo:** **"Atenção!"** + **`dm-data-table`** paginada com os itens vinculados + só `[Voltar]`.
 - **Sair sem salvar:** usar **`ExitConfirmationDialogComponent`** do DS (`@bancodoc/ui`) — primária = "Continuar editando".
-- **Confirmação genérica (desativar/remover):** `dm-dialog-alert-template`, dialog `size="md"`, botões `size="sm"`.
+- **Confirmação genérica:** `dm-dialog-alert-template`, dialog `size="md"`, botões `size="sm"`.
 - **Vinculação:** `dm-data-table` + busca + **alerta** `notify`/`bell` ("É necessário selecionar pelo menos um X para salvar a vinculação.") + botão **"Salvar" sempre ativo**.
 - 🚩 Anti-padrões: `<table>` HTML cru dentro do dialog; modal próprio em vez do componente do DS; botão de vinculação `[disabled]` / rotulado "Vincular X"; alerta removido.
 
 ### 3. Botões, ações e nomenclatura
 - Gerenciar um registro = ação única **"Gerenciar"** (ícone `gear`) — **não** "Visualizar"/"Editar" separados nem rota `/editar`. Somente-leitura é definido por **permissão**.
 - Botão de confirmar em **modal de vinculação** = **"Salvar"**.
-- 🚩 Anti-padrões: ações "Visualizar"+"Editar"; ícone `eye`; botão "Vincular X".
+- Botão de salvar de **formulário** = sempre **"Salvar"** (não "Cadastrar"/"Enviar"), tanto em criação quanto em edição.
+- **Footer do formulário:** `border-t border-neutral-200 bg-neutral-50 rounded-b-lg`, alinhado à direita, **só o botão primário "Salvar"** no modo edição/criação (sem "Cancelar"/"Voltar" — voltar é pelo header). Referência: `servicos`/`programas`.
+- **Link clicável** (contagem → modal, "ver detalhes", etc.) = diretiva **`dmLinkButton`** do DS (cor `text-secondary-700`) — **não** `text-primary-500`, nem cor hardcoded `text-[#0075FF]`, nem `hover:underline` custom.
+- 🚩 Anti-padrões: ações "Visualizar"+"Editar"; ícone `eye`; botão "Vincular X"; botão "Cadastrar"/"Enviar" em form; "Cancelar" no footer.
 
 ### 4. Validação de formulário
 - **Required** = **`DmValidators.required`** (trata espaço em branco como vazio) — não `Validators.required` nativo.
 - Ao submeter inválido: util **`markAllAsTouched`** do DS (emite `statusChanges` → renderiza erro sob OnPush + scroll-to-invalid) — não o `form.markAllAsTouched()` nativo.
 - Mensagem padrão no campo: **"Campo obrigatório."**.
 - **Tabela obrigatória:** erro **"Campo obrigatório." ABAIXO da tabela** (não acima, não em toast).
-- Erro de servidor (duplicado 409) → **`setErrors({ duplicate: true })`** no campo (helper text via `customErrors`), nunca toast. E-mail inválido: **"Insira um e-mail válido"**.
+- Erro de servidor (duplicado 409) → **`setErrors({ duplicate: true })`** no campo (helper text via `customErrors`), nunca toast. Mensagem de **nome duplicado**: **"Já existe um item com este nome cadastrado."** (genérico "item", não a entidade). E-mail inválido: **"Insira um e-mail válido"**; e-mail duplicado: **"Já existe um usuário com este e-mail cadastrado."**.
 - Grep: `Validators.required`, `this.form.markAllAsTouched(`.
 
 ### 5. Tabelas
@@ -92,6 +104,23 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 ### 6. Navegação / textos
 - Breadcrumb começa pelo módulo (ex.: **"Empresa"**), com chaves i18n quando o resto do app é traduzível.
 - Textos em PT com **acentuação** correta (inclusive seeds da fake-api).
+
+### 7. Layout dos formulários (página de cadastro/edição)
+- **Cabeçalho** (`dm-page-header` com botão voltar + título) aparece em **criação E edição** — `Novo X` ao criar, `Gerenciar X` ao editar. 🚩 Anti-padrão: header dentro de `@if (isCreateMode)` → some na edição (botão voltar + título desaparecem).
+- **Espaçamento:** grids de campos e seções usam **`gap-8` / `space-y-8`** (32px), padrão do cadastro de programas. 🚩 `gap-4`/`space-y-4` (16px) está fora do padrão. (Não confundir com `space-y-1` de label/hint.)
+- **Footer:** ver dimensão 3 (`bg-neutral-50`, só "Salvar").
+- Grep: `@if (isCreateMode)` em volta de `dm-page-header`; `grid gap-4`, `space-y-4` nos forms.
+
+### 8. Contagem clicável → modal com os itens
+- Em listagens/tabelas (**exceto** tabelas dentro de modais), toda **célula que mostra um número de itens vinculados** (Unidades, Usuários, Grupos, Perfis…) deve ser um **link clicável** que abre um modal listando os itens.
+- Link = **`dmLinkButton`** (cor `text-secondary-700`) + ícone **`arrow-line-up-right`** (`source="ph" [size]="16"`); renderiza só quando `> 0` (senão "0" puro).
+- Modal = `dm-data-table` paginada (título + subtítulo = nome do registro) + `[Cancelar]`. Um único dialog genérico reutilizável (ex.: `RelatedItemsDialogComponent`) atende todas as colunas. Referência: `programas` (consulta → "Unidades vinculadas").
+- Dados: resolva ids→nomes pelas listas-mestre do store quando a linha já traz os ids; quando a linha só tem a **contagem** (sem ids), crie endpoint/fetch para buscar os itens.
+- 🚩 Anti-padrões: número como texto puro não-clicável; link com cor própria (`text-primary-500`, `text-[#0075FF]`) em vez de `dmLinkButton`/`secondary-700`.
+
+### 9. Info contextual: tooltip no título, não alert
+- Informação de apoio **não-obrigatória** ao lado de um título de seção → **tooltip** no padrão DS: `<div [dmTooltip]="…" tooltipPosition="right"><dm-icon name="info" source="ph" [size]="16"></dm-icon></div>` — **não** um `dm-alert` ocupando espaço fixo. Referência: `programas` ("Conteúdo do programa ⓘ").
+- `dm-alert` (`notify`/`bell`) permanece para **ação requerida** (ex.: alerta dentro do modal de vinculação: "É necessário selecionar pelo menos um X…").
 
 ## Output format
 

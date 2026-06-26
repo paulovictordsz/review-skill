@@ -18,11 +18,16 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 ## Os padrões que a skill verifica
 
 ### Toasts
-- **Sucesso:** título `"[Entidade] [ação no particípio]!"`, **sem subtítulo**. O particípio segue o **comportamento** e **concorda em gênero** com a entidade:
+- **Sucesso:** título `"[Entidade] [ação no particípio]!"`, **sem subtítulo**. O particípio segue o **comportamento** e **concorda em gênero** com a entidade.
+
+  **Distinção crítica — "salvo" (formulário) vs "inserido/editado" (grid inline):**
+  - Salvar entidade via **formulário** (botão "Salvar", handler que faz create OU edit) → **`[Entidade] salvo!`** (ex.: `Grupo salvo!`, `Usuário salvo!`). Ref.: `empresas`.
+  - **CRUD inline em grid** (adicionar/editar/renomear item numa tabela) → `inserido!/editado!/renomeado!`. Ref.: `servicos`.
 
   | Comportamento | Particípio (masc. / fem.) | Exemplos |
   |---|---|---|
-  | Cadastro / inserção | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!" |
+  | Salvar entidade (formulário) | `salvo` / `salva` | "Grupo salvo!", "Perfil salvo!", "Usuário salvo!" |
+  | Inserção inline (grid) | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!" |
   | Edição | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!" |
   | Exclusão | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!" |
   | Renomeação | `renomeado` / `renomeada` | "Tipo de orientação renomeado!", "Categoria de procedimento renomeada!" |
@@ -32,10 +37,12 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
   Para auditar: ache todo `toastService.success(`, classifique o comportamento pela **ação do handler** (POST=inserção, PUT/PATCH=edição, rename=renomeação, vincular=vinculação, DELETE=exclusão), concorde o gênero pelo substantivo-núcleo da entidade e termine com `!`.
 - **Erro:** `"Não foi possível [ação] o [item]"` + detalhe no subtítulo.
 - **Info/bloqueio:** `"Sem permissão"` + motivo.
-- 🚩 Fora do padrão: títulos genéricos `Sucesso`/`Erro`, `"...com sucesso"`, `cadastrado`/`salvo` genérico onde o comportamento pede `inserido`/`editado`/`renomeado`, gênero/plural trocado, falta de `!`, e **feedback de campo obrigatório em toast** (deve ser helper text no campo).
+- 🚩 Fora do padrão: títulos genéricos `Sucesso`/`Erro`, `"...com sucesso"`, `cadastrado` genérico, `inserido`/`editado` num toast de **formulário** (ali é `salvo!`), gênero/plural trocado, falta de `!`, e **feedback de campo obrigatório em toast** (deve ser helper text no campo).
 
 ### Modais (usar o componente do DS, não rolar o próprio)
 - **Excluir (sem vínculo):** "Atenção!" vermelho + ícone lixeira + texto irreversível + `[Cancelar][Confirmar]`.
+- **Remover vínculo / excluir (variante `danger`):** mesmo visual "Atenção!" + trash; texto no padrão **`Ao clicar em "Confirmar", você concorda que [item] vinculado será removido [contexto].`** (concorda gênero/número). Use uma variante `danger` no dialog genérico, não outro componente.
+- **Mudança de status (desativar/ativar):** confirmação **neutra** (ícone `warning`), **não** danger.
 - **Bloqueio por vínculo:** "Atenção!" + `dm-data-table` paginada dos vinculados + só `[Voltar]`.
 - **Sair sem salvar:** `ExitConfirmationDialogComponent` do DS (primária = "Continuar editando").
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `md`, botões `sm`.
@@ -43,13 +50,25 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 
 ### Botões / ações
 - Gerenciar registro = ação única **"Gerenciar"** (não "Visualizar"/"Editar"); somente-leitura via permissão.
-- Confirmar em modal de vinculação = **"Salvar"**.
+- Confirmar em modal de vinculação = **"Salvar"**. Botão de salvar de **formulário** = sempre **"Salvar"** (não "Cadastrar").
+- **Footer do formulário:** `border-t border-neutral-200 bg-neutral-50 rounded-b-lg`, à direita, **só o primário "Salvar"** (voltar é pelo header).
+- **Link clicável** = diretiva **`dmLinkButton`** (cor `secondary-700`) — não `text-primary-500` nem `#0075FF` hardcoded.
 
 ### Validação de formulário
 - **Required** = `DmValidators.required` (trata espaço como vazio).
 - Submit inválido → util **`markAllAsTouched`** do DS (renderiza erro sob OnPush + scroll).
 - Mensagem **"Campo obrigatório."**; em **tabela obrigatória**, exibida **abaixo da tabela**.
-- Erro de servidor (duplicado 409) → `setErrors` no campo (não toast).
+- Erro de servidor (duplicado 409) → `setErrors` no campo (não toast). Nome duplicado: **"Já existe um item com este nome cadastrado."** (genérico "item").
+
+### Layout do formulário
+- **Cabeçalho** (`dm-page-header`: voltar + título) aparece em **criação E edição** (`Novo X` / `Gerenciar X`) — nunca dentro de `@if (isCreateMode)`.
+- **Espaçamento** de campos/seções = **`gap-8` / `space-y-8`** (32px), padrão do cadastro de programas (não `gap-4`/`space-y-4`).
+
+### Contagem clicável → modal
+- Número de itens vinculados numa tabela (fora de modais) = **link `dmLinkButton`** + ícone `arrow-line-up-right` que abre um **modal** (`dm-data-table` paginada) listando os itens. Só clicável quando `> 0`.
+
+### Info contextual
+- Apoio **não-obrigatório** ao lado de um título → **tooltip** (`dm-icon name="info"` + `[dmTooltip]`), não `dm-alert`. `dm-alert` fica para **ação requerida**.
 
 ### Tabelas / navegação
 - Título da listagem **"[Item]s cadastrados"**; `pageSize` **10**; empty state "Ops, não existem registros cadastrados!".
