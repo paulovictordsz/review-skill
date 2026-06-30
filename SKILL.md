@@ -1,22 +1,33 @@
 ---
-name: auditing-design-system-compliance
-description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project for design-system consistency — toasts (incl. "salvo" form vs "inserido/editado" inline), modals (which component/pattern, incl. danger removal variant), button/action naming, form validation & duplicate-name messages, tables, breadcrumbs, form layout (header on edit, footer, gap-8/space-y-8 spacing), clickable-count→modal links (dmLinkButton), and tooltip-on-title vs alert — reporting what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo".
+name: review-skill
+description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project — both (A) for design-system consistency in the code (toasts incl. "salvo" form vs "inserido/editado" inline, modals incl. danger removal variant, button/action naming, form validation & duplicate-name messages, tables, breadcrumbs, form layout, clickable-count→modal links, tooltip-vs-alert), and (B) verifying the change in the running app (stale bundles, change-detection zones, mock-API signals). Reports what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo", "review em funcionamento/componentes".
 ---
 
-# Auditing Design-System Compliance (DemarcoDS)
+# DemarcoDS Review (review-skill)
 
 ## Overview
 
-Audit a feature module against the project's Design System and reference screens, then report every deviation as **`fora do padrão` → `o padrão é` → `a correção`** (with `file:line` and severity). This skill is **DemarcoDS / `Bancodoc.Interface` (Angular/Nx)** specific.
+One skill, two complementary jobs on the same feature module/branch:
 
-**Core principle:** The standard is whatever `libs/ui` (the DS) and the mature reference apps already do — **`apps/empresas` (clientes)** and **`apps/servicos` (documentos)**. The audited module must match them, not reinvent its own components.
+- **Part A — Audit DS compliance (code):** check a feature module against the project's Design System and reference screens, reporting every deviation as **`fora do padrão` → `o padrão é` → `a correção`** (with `file:line` and severity).
+- **Part B — Verify in the running app:** confirm a UI change actually landed and behaves correctly in a running hot-reload dev server (often with a mock API like MSW), seeing past stale bundles, change-detection traps, and misleading mock-API signals.
+
+Use Part A to find/fix deviations; use Part B to prove the fix is real in the browser. This skill is **DemarcoDS / `Bancodoc.Interface` (Angular/Nx)** specific.
+
+**Core principle (A):** The standard is whatever `libs/ui` (the DS) and the mature reference apps already do — **`apps/empresas` (clientes)** and **`apps/servicos` (documentos)**. The audited module must match them, not reinvent its own components.
+
+**Core principle (B):** Confirm the build, drive with *trusted* events, and read *framework state* — not just the DOM.
+
+---
+
+# Part A — Auditing Design-System Compliance
 
 ## How to run the audit
 
 1. **Anchor the standard:** read the relevant DS component in `libs/ui` and how `empresas`/`servicos` use it. Never infer the standard from the module under review.
 2. **Scan each dimension below** (grep the anti-patterns), across the module's pages, forms, shared dialogs.
 3. **Report** a deviation table: `arquivo:linha · o que faz · o padrão · a correção · severidade`. Group by dimension. Confirm what IS compliant too.
-4. Optionally verify fixes in the running app — see skill `verifying-ui-in-running-app`.
+4. Optionally verify fixes in the running app — see **Part B** below.
 
 ## The standards (what to check)
 
@@ -73,7 +84,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 - **Remover vínculo / excluir registro (variante `danger`):** mesmo visual **"Atenção!"** vermelho + `trash` + `bg-error-100` + `[Cancelar] [Confirmar]`. Texto no padrão do DS: **`Ao clicar em "Confirmar", você concorda que [o item] vinculado será removido [do contexto].`** (concordância de gênero/número). Num dialog genérico parametrizável, exponha uma variante `danger` em vez de criar outro componente.
 - **Mudança de status (desativar/ativar):** confirmação **neutra** (ícone `warning`, `dm-dialog-alert-template`), **não** `danger` — vermelho/trash é só para **remoção/exclusão**.
 - **Bloqueio por vínculo:** **"Atenção!"** + **`dm-data-table`** paginada com os itens vinculados + só `[Voltar]`.
-- **Sair sem salvar:** usar **`ExitConfirmationDialogComponent`** do DS (`@bancodoc/ui`) — primária = "Continuar editando".
+- **Sair sem salvar:** usar **`ExitConfirmationDialogComponent`** do DS (`@bancodoc/ui`) — primária = "Continuar editando". 🚩 Atenção: ao remover o botão "Cancelar" do footer, garanta que o gatilho do modal continue ligado (ex.: `(backClick)` do `dm-page-header` chamando `handleCancel()`), senão o modal fica órfão e a saída navega direto sem confirmar.
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `size="md"`, botões `size="sm"`.
 - **Vinculação:** `dm-data-table` + busca + **alerta** `notify`/`bell` ("É necessário selecionar pelo menos um X para salvar a vinculação.") + botão **"Salvar" sempre ativo**.
 - 🚩 Anti-padrões: `<table>` HTML cru dentro do dialog; modal próprio em vez do componente do DS; botão de vinculação `[disabled]` / rotulado "Vincular X"; alerta removido.
@@ -122,7 +133,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 - Informação de apoio **não-obrigatória** ao lado de um título de seção → **tooltip** no padrão DS: `<div [dmTooltip]="…" tooltipPosition="right"><dm-icon name="info" source="ph" [size]="16"></dm-icon></div>` — **não** um `dm-alert` ocupando espaço fixo. Referência: `programas` ("Conteúdo do programa ⓘ").
 - `dm-alert` (`notify`/`bell`) permanece para **ação requerida** (ex.: alerta dentro do modal de vinculação: "É necessário selecionar pelo menos um X…").
 
-## Output format
+## Output format (Part A)
 
 > **🔴/🟡/🟢 [Dimensão] — `arquivo:linha`**
 > Faz: `<o que está fora>` · Padrão: `<o correto, com a referência no libs/ui ou empresas/servicos>` · Correção: `<a mudança>`
@@ -133,3 +144,45 @@ Sempre listar também o que **já está conforme**, para dar confiança.
 - Inferir o "padrão" a partir do próprio módulo auditado → sempre ancorar em `libs/ui` + `empresas`/`servicos`.
 - Marcar como desvio algo que é decisão de produto (ex.: grupo permite "Excluir mesmo assim") → separar **inconsistência de DS** de **regra de negócio**.
 - Esquecer de varrer os **dialogs compartilhados** (`shared/ui/components`), não só as páginas.
+
+---
+
+# Part B — Verifying UI Changes in a Running App
+
+When you verify a UI change in a running app, **two layers can lie to you**: the dev server (may serve a *stale* bundle) and your automation harness (may not drive the framework's reactivity). Don't trust "it looks broken" or "it looks fixed" until you've ruled both out.
+
+## When to use Part B
+- You changed template/form/component code and "it doesn't appear" in the running app.
+- Your Puppeteer/Playwright check gives a result that contradicts the code.
+- App uses a watch/HMR dev server and/or a mock API (MSW, mirage, etc.).
+
+## The traps (the meat)
+
+| Trap | Symptom | Fix |
+|---|---|---|
+| **Stale bundle from a compile error** | App returns 200 and "looks up", but your change isn't there; tests reflect old behavior | A TS/template error makes the watch server keep serving the **last good bundle**. **Run the real build** (`nx build <proj>`, `nx run <proj>:typecheck`, `tsc --noEmit`) to surface the error. **"Server responds 200" is NOT proof your code compiled.** Fix, rebuild, then hard-reload. |
+| **`evaluate` runs OUTSIDE the framework's change-detection / zone** | Synthetic `el.value=…; dispatchEvent(new Event('input'))` or `el.click()` change the DOM but nothing re-renders | Synthetic events in `page.evaluate` don't tick CD or update the form model. **Drive with trusted events**: real `page.click()` / `page.type()` / `fill`. Use `evaluate` only to **read state** or `fetch`. |
+| **Asserting on the DOM only** | Control is invalid but no error shows; value "didn't change" | Read **framework state**: in Angular dev mode `window.ng.getComponent(el)` → `control.value/valid/errors/touched`, signals. The DOM can lag a CD tick. |
+| **Mock-API signals mislead** | `fetch(endpoint)` → 200, so "it works" | 200 only proves the worker intercepts — not that *your scenario* passes. The in-memory DB usually **resets on full reload** (records created via API vanish). Use a deterministic seed (`faker.seed(n)`) so data is stable across reloads. |
+
+## Angular OnPush form-error gotchas
+- `Validators.required` treats whitespace `'  '` as **valid** → use a **trimming** required validator (DS `DmValidators.required`) for true "required".
+- A form-field renders errors off the control's **`statusChanges`**. `markAllAsTouched()` does **not** emit `statusChanges`, so under OnPush the error won't render on submit. Use the DS `markAllAsTouched` util that also calls `updateValueAndValidity()` (emits the event). `setErrors()` *does* emit — use it for server/duplicate errors so the field renders.
+- A conditionally-projected hint (`ContentChild`) may not render under OnPush → render it as a plain **sibling** element instead.
+
+## Red flags — stop and check
+- "The dev server is up (200)" → **did you actually build?**
+- "My puppeteer click did nothing" → trusted event vs `evaluate`.
+- "Control is invalid but no error shows" → `statusChanges` / `markAllAsTouched` / build.
+- "Created a record but it's gone after reload" → mock DB reset; seed it.
+
+## Reliable verification loop
+1. **Build** the affected project — catch compile errors that would freeze the bundle.
+2. Wait for the dev server to recompile; **hard-reload** the page.
+3. Drive the UI with **real** clicks/typing (trusted events).
+4. Assert on **framework state** (`window.ng`) and the rendered DOM/screenshot.
+5. For mock APIs, rely on **seeded, deterministic** data — not on freshly created records surviving a reload.
+
+## DemarcoDS run notes
+- Fake API: `npm run serve-fake -- dm` (MSW via `DM_FAKE_API=true`); app em `http://localhost:4200/plataforma/`. O MSW intercepta no browser — `curl` direto a `/api/*` retorna 404 (esperado, não é erro).
+- Compile gate antes de confiar no que está na tela: `nx run <proj>:typecheck`.

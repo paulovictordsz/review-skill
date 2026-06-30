@@ -1,11 +1,13 @@
 # review-skill
 
-[Claude Code](https://claude.com/claude-code) skills for reviewing a **DemarcoDS / `Bancodoc.Interface`** (Angular/Nx) feature module against the Design System — and verifying the fixes.
+[Claude Code](https://claude.com/claude-code) skill para fazer **review de um módulo de feature do DemarcoDS / `Bancodoc.Interface`** (Angular/Nx) — tanto nos **componentes/código** quanto **em funcionamento (app rodando)**.
 
-| Skill | O que faz |
+É **uma skill só**, com duas frentes:
+
+| Parte | O que faz |
 |---|---|
-| **`auditing-design-system-compliance`** | Varre o módulo procurando o que está **fora do padrão do DS** (toasts, modais, botões/ações, validação, tabelas, breadcrumb) e reporta **`fora do padrão → o padrão é → a correção`** com `arquivo:linha` e severidade. |
-| **`verifying-ui-in-running-app`** | Como **verificar** uma mudança de UI na app rodando (dev server + mock API) sem cair nas armadilhas de bundle stale / change detection. Usada depois de aplicar as correções. |
+| **A — Auditoria de DS (código)** | Varre o módulo procurando o que está **fora do padrão do DS** (toasts, modais, botões/ações, validação, tabelas, layout, contagem→modal, tooltip-vs-alert) e reporta **`fora do padrão → o padrão é → a correção`** com `arquivo:linha` e severidade. |
+| **B — Verificação em funcionamento** | Como **verificar** uma mudança de UI na app rodando (dev server + mock API) sem cair nas armadilhas de bundle stale / change detection / sinais enganosos da mock API. Usada depois de aplicar as correções. |
 
 ## Como a auditoria funciona
 
@@ -79,12 +81,10 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 ## Install
 
 ```bash
-git clone https://github.com/paulovictordsz/review-skill.git
-cp -r review-skill/auditing-design-system-compliance ~/.claude/skills/
-cp -r review-skill/verifying-ui-in-running-app    ~/.claude/skills/
+git clone https://github.com/paulovictordsz/review-skill.git ~/.claude/skills/review-skill
 ```
 
-As skills carregam automaticamente quando o contexto bate (ex.: "está no padrão?", "revisa o módulo", "padroniza").
+O `SKILL.md` fica na raiz do repo, então clonar direto em `~/.claude/skills/review-skill/` já registra a skill — e mantém o repo git para `pull`/`push` depois. Ela carrega automaticamente quando o contexto bate (ex.: "está no padrão?", "revisa o módulo", "padroniza", "review em funcionamento").
 
 ## Como foram construídas
 
