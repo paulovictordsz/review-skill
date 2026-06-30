@@ -41,14 +41,18 @@ Use Part A to find/fix deviations; use Part B to prove the fix is real in the br
 #### Vocabulário do toast de sucesso por comportamento
 O particípio segue a **ação** e **concorda em gênero** com a entidade. Sempre termina com **"!"**.
 
-> **Distinção crítica — "salvo" (formulário) vs "inserido/editado" (grid inline):**
-> - **Salvar uma entidade via formulário** (botão "Salvar" de um form de página, handler único que faz create OU edit) → **`[Entidade] salvo!`** (ex.: `Grupo salvo!`, `Perfil salvo!`, `Usuário salvo!`). Referência: `empresas` (`clienteSalvo`, `usuarioSalvo`).
+> **Distinção crítica do toast de "Salvar" — depende de criar vs. editar:**
+> - **Salvar EDIÇÃO de uma entidade já cadastrada** (tela dedicada de *editar/gerenciar*, cadastro já concluído; botão "Salvar"/"Salvar alterações" no modo gerenciamento) → **SEMPRE `Alterações salvas!`** (texto fixo, genérico — NÃO a entidade). Este é o padrão para salvar edições.
+> - **Criar uma entidade nova** (cadastro/wizard concluído com sucesso) → **`[Entidade] cadastrado!`** (ex.: `Fornecedor cadastrado!`, `Cliente cadastrado!`).
+> - **Form unificado create+edit numa única tela** (a mesma tela faz os dois, sem separação clara) → **`[Entidade] salvo!`** (ex.: `Grupo salvo!`, `Perfil salvo!`, `Usuário salvo!`). Referência: `usuarios`.
 > - **CRUD inline em grid/lista** (adicionar/editar/renomear um item dentro de uma tabela, sem sair da tela) → **`inserido!/editado!/renomeado!`**. Referência: `servicos` (categorias, fundamentos).
-> 🚩 Não use `inserido`/`editado`/`cadastrado` no toast de um **formulário** de entidade — ali é `salvo!`.
+> 🚩 Numa tela de **gerenciar/editar** registro existente, NÃO use `[Entidade] salvo!` nem `editado!` — o correto é **`Alterações salvas!`**.
 
-| Comportamento | Particípio (masc. / fem.) | Exemplos reais |
+| Comportamento | Toast | Exemplos reais |
 |---|---|---|
-| **Salvar entidade (formulário)** | `salvo` / `salva` | "Grupo salvo!", "Perfil salvo!", "Usuário salvo!" |
+| **Salvar edição (tela gerenciar/editar)** | `Alterações salvas!` (fixo) | "Alterações salvas!" (gerenciar fornecedor/cliente) |
+| **Criar entidade (cadastro novo)** | `[Entidade] cadastrado/a!` | "Fornecedor cadastrado!", "Cliente cadastrado!" |
+| **Salvar entidade (form unificado create+edit)** | `salvo` / `salva` | "Grupo salvo!", "Perfil salvo!", "Usuário salvo!" |
 | **Inserção inline (grid)** | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!", "Categoria de dívida inserida!", "Cargo para análise inserido!" |
 | **Edição** | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!", "Fundamento de identificação editado!" |
 | **Exclusão** | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!", "Cargo para análise excluído!" |
@@ -66,7 +70,9 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 
 1. **Encontre todos os toasts de sucesso.** Grep: `toastService.success(` (e variações `.success({`). Audite **cada ocorrência**, não só as que "parecem erradas".
 2. **Classifique o comportamento pela ação do handler** (leia o método que chama o toast — não adivinhe pelo texto atual):
-   - **save de formulário de entidade** (handler único `save…`/`create…`+`update…` por trás do botão "Salvar" da página) → **`[Entidade] salvo!`**
+   - **salvar EDIÇÃO** numa tela de gerenciar/editar registro existente (rota `/:id`, modo edição, PATCH/update) → **`Alterações salvas!`** (fixo)
+   - **criar entidade nova** (cadastro/wizard, POST/create) → **`[Entidade] cadastrado!`**
+   - **save de form unificado create+edit** (uma tela só faz os dois) → **`[Entidade] salvo!`**
    - cria registro novo **inline em grid** (`inserir…` numa tabela, sem sair da tela) → **inserção** → `inserido/inserida`
    - atualiza registro existente (PUT/PATCH / `update…` / `editar…`) → **edição** → `editado/editada`
    - altera **só o nome** (rename inline / `renomear…`) → **renomeação** → `renomeado/renomeada`
@@ -77,7 +83,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 4. **Decida singular vs. plural** pela quantidade que a ação atinge: uma → singular; várias → plural (`Pesquisas vinculadas!`).
 5. **Monte o título** `"[Entidade] [particípio]!"` e compare com o atual. Reporte como desvio se: verbo errado para o comportamento (ex.: `salvo`/`cadastrado` numa edição), gênero/plural trocado, ou falta o `!`.
 
-> ⚠️ Conflito comum: `cadastrado` genérico está errado. Use **`salvo!`** no toast de um **formulário** de entidade e **`inserido!/editado!/renomeado!`** apenas para **CRUD inline em grid** (ver distinção acima).
+> ⚠️ Conflito comum: numa tela de **gerenciar/editar** registro existente, o save é **`Alterações salvas!`** (não `[Entidade] salvo!` nem `editado!`). `[Entidade] cadastrado!` é só para **criação**; `inserido!/editado!/renomeado!` só para **CRUD inline em grid** (ver distinção acima).
 
 ### 2. Modais — usar o componente certo do DS, não rolar o próprio
 - **Confirmar exclusão (sem vínculo):** título **"Atenção!"** vermelho + ícone `trash` (`bg-error-100`/`text-error-500`) + texto de ação irreversível + `[Cancelar] [Confirmar]`.
