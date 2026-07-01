@@ -91,6 +91,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 - **Mudança de status (desativar/ativar):** confirmação **neutra** (ícone `warning`, `dm-dialog-alert-template`), **não** `danger` — vermelho/trash é só para **remoção/exclusão**.
 - **Bloqueio por vínculo:** **"Atenção!"** + **`dm-data-table`** paginada com os itens vinculados + só `[Voltar]`.
 - **Sair sem salvar:** usar **`ExitConfirmationDialogComponent`** do DS (`@bancodoc/ui`) — primária = "Continuar editando". 🚩 Atenção: ao remover o botão "Cancelar" do footer, garanta que o gatilho do modal continue ligado (ex.: `(backClick)` do `dm-page-header` chamando `handleCancel()`), senão o modal fica órfão e a saída navega direto sem confirmar.
+  - **Detecte "alterações não salvas" por VALOR, não por `.dirty`:** compare o estado atual do form com um **baseline capturado no carregamento** (`JSON.stringify` dos valores persistíveis, ignorando controles só-de-UI). Efeitos internos (sync de listas/vigência, `enable()`/`disable()`, `patchValue`) podem sujar o `.dirty` sem edição real do usuário → o modal aparece falso-positivo. Aplique a checagem só em **modo edição**, e re-capture o baseline após salvar.
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `size="md"`, botões `size="sm"`.
 - **Tamanho do modal de confirmação/exclusão:** **`size="md"`** (igual `excluir-cliente-dialog` / `grupo-delete-dialog`). 🚩 `size="sm"` deixa o modal pequeno demais — fora do padrão.
 - **Botão Confirmar do modal (exclusão/confirmação):** **primary preenchido** (sem `color`) — o `color="danger"` do `DmButton` é **ghost** (texto vermelho) e NÃO deve ser usado no confirmar. O vermelho vem só do ícone `trash` + título "Atenção!". (`color="danger"` é válido em **botões de ação/action-bar** como "Remover selecionados", não no confirmar do modal.)
@@ -111,6 +112,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 - Mensagem padrão no campo: **"Campo obrigatório."**.
 - **Tabela obrigatória:** erro **"Campo obrigatório." ABAIXO da tabela** (não acima, não em toast).
 - Erro de servidor (duplicado 409) → **`setErrors({ duplicate: true })`** no campo (helper text via `customErrors`), nunca toast. Mensagem de **nome duplicado**: **"Já existe um item com este nome cadastrado."** (genérico "item", não a entidade). E-mail inválido: **"Insira um e-mail válido"**; e-mail duplicado: **"Já existe um usuário com este e-mail cadastrado."**.
+- **Validadores "só-criação" em telas de edição:** um validador que só faz sentido ao criar (ex.: `data ≥ hoje`, "início no futuro") NÃO deve ser aplicado a **dados pré-existentes** carregados no modo editar/gerenciar — datas antigas de registros já criados invalidam o form, e aí o **Salvar vira no-op silencioso** (nem sucesso nem erro). Torne o validador condicional ao contexto (registro novo vs. existente). Sintoma clássico: "cliquei em Salvar e não aconteceu nada / nenhum toast".
 - Grep: `Validators.required`, `this.form.markAllAsTouched(`.
 
 ### 5. Tabelas
