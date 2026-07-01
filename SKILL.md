@@ -44,7 +44,7 @@ O particípio segue a **ação** e **concorda em gênero** com a entidade. Sempr
 > **Distinção crítica do toast de "Salvar" — depende de criar vs. editar:**
 > - **Salvar EDIÇÃO de uma entidade já cadastrada** (tela dedicada de *editar/gerenciar*, cadastro já concluído; botão "Salvar"/"Salvar alterações" no modo gerenciamento) → **SEMPRE `Alterações salvas!`** (texto fixo, genérico — NÃO a entidade). Este é o padrão para salvar edições.
 > - **Criar uma entidade nova** (cadastro/wizard concluído com sucesso) → **`[Entidade] cadastrado!`** (ex.: `Fornecedor cadastrado!`, `Cliente cadastrado!`).
-> - **Form unificado create+edit numa única tela** (a mesma tela faz os dois, sem separação clara) → **`[Entidade] salvo!`** (ex.: `Grupo salvo!`, `Perfil salvo!`, `Usuário salvo!`). Referência: `usuarios`.
+> - **Form unificado create+edit numa única tela** (usuarios: grupo/perfil/usuário) → **ramifique pelo modo** (`editingId()` / rota `/:id`): **criar → `[Entidade] cadastrado!`** (ex.: `Grupo cadastrado!`), **editar → `Alterações salvas!`**. 🚩 NÃO use `[Entidade] salvo!`.
 > - **CRUD inline em grid/lista** (adicionar/editar/renomear um item dentro de uma tabela, sem sair da tela) → **`inserido!/editado!/renomeado!`**. Referência: `servicos` (categorias, fundamentos).
 > 🚩 Numa tela de **gerenciar/editar** registro existente, NÃO use `[Entidade] salvo!` nem `editado!` — o correto é **`Alterações salvas!`**.
 
@@ -52,7 +52,7 @@ O particípio segue a **ação** e **concorda em gênero** com a entidade. Sempr
 |---|---|---|
 | **Salvar edição (tela gerenciar/editar)** | `Alterações salvas!` (fixo) | "Alterações salvas!" (gerenciar fornecedor/cliente) |
 | **Criar entidade (cadastro novo)** | `[Entidade] cadastrado/a!` | "Fornecedor cadastrado!", "Cliente cadastrado!" |
-| **Salvar entidade (form unificado create+edit)** | `salvo` / `salva` | "Grupo salvo!", "Perfil salvo!", "Usuário salvo!" |
+| **Form unificado create+edit** | ramifica: `[Entidade] cadastrado!` (novo) / `Alterações salvas!` (editar) | "Grupo cadastrado!" (novo), "Alterações salvas!" (editar) |
 | **Inserção inline (grid)** | `inserido` / `inserida` | "Tipo de documento inserido!", "Orientação geral inserida!", "Categoria de dívida inserida!", "Cargo para análise inserido!" |
 | **Edição** | `editado` / `editada` | "Tipo de critério editado!", "Categoria de motivo editada!", "Fundamento de identificação editado!" |
 | **Exclusão** | `excluído` / `excluída` | "Tipo de uso excluído!", "Justificativa de motivo excluída!", "Cargo para análise excluído!" |
@@ -72,7 +72,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 2. **Classifique o comportamento pela ação do handler** (leia o método que chama o toast — não adivinhe pelo texto atual):
    - **salvar EDIÇÃO** numa tela de gerenciar/editar registro existente (rota `/:id`, modo edição, PATCH/update) → **`Alterações salvas!`** (fixo)
    - **criar entidade nova** (cadastro/wizard, POST/create) → **`[Entidade] cadastrado!`**
-   - **save de form unificado create+edit** (uma tela só faz os dois) → **`[Entidade] salvo!`**
+   - **save de form unificado create+edit** (uma tela só faz os dois) → ramifique por `editingId()`: novo → **`[Entidade] cadastrado!`**; editar → **`Alterações salvas!`**
    - cria registro novo **inline em grid** (`inserir…` numa tabela, sem sair da tela) → **inserção** → `inserido/inserida`
    - atualiza registro existente (PUT/PATCH / `update…` / `editar…`) → **edição** → `editado/editada`
    - altera **só o nome** (rename inline / `renomear…`) → **renomeação** → `renomeado/renomeada`
