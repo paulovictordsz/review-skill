@@ -152,6 +152,7 @@ Sempre listar também o que **já está conforme**, para dar confiança.
 - Inferir o "padrão" a partir do próprio módulo auditado → sempre ancorar em `libs/ui` + `empresas`/`servicos`.
 - Marcar como desvio algo que é decisão de produto (ex.: grupo permite "Excluir mesmo assim") → separar **inconsistência de DS** de **regra de negócio**.
 - Esquecer de varrer os **dialogs compartilhados** (`shared/ui/components`), não só as páginas.
+- **Auditar só QUAL componente do DS foi usado e esquecer os PROPS de detalhe** — usar o componente certo com prop errado **ainda é desvio**. Para cada componente do DS confira: dialog `size` (confirmação = `md`, não `sm`), botão `color`/`size` (Confirmar de modal = primary preenchido, não `danger` ghost), `dm-icon` `source`/`name`/`[size]`, variante do `dm-alert` (`notify`/`bell` p/ ação vs `info` p/ contexto), colunas/larguras da `dm-data-table`. Grep sugerido: `size="sm"` em `dm-dialog` de confirmação; `color="danger"` no botão de confirmar.
 
 ---
 
