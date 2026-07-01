@@ -100,7 +100,7 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 ### 3. Botões, ações e nomenclatura
 - Gerenciar um registro = ação única **"Gerenciar"** (ícone `gear`) — **não** "Visualizar"/"Editar" separados nem rota `/editar`. Somente-leitura é definido por **permissão**.
 - Botão de confirmar em **modal de vinculação** = **"Salvar"**.
-- Botão de salvar de **formulário** = sempre **"Salvar"** (não "Cadastrar"/"Enviar"), tanto em criação quanto em edição.
+- Botão de salvar de **formulário** = sempre **"Salvar"** (não "Cadastrar"/"Enviar"/**"Salvar alterações"**), tanto em criação quanto em edição — inclusive no modo gerenciar/editar. (⚠️ o toast disso é "Alterações salvas!", mas o **botão** é só "Salvar".)
 - **Footer do formulário:** `border-t border-neutral-200 bg-neutral-50 rounded-b-lg`, alinhado à direita, **só o botão primário "Salvar"** no modo edição/criação (sem "Cancelar"/"Voltar" — voltar é pelo header). Referência: `servicos`/`programas`.
 - **Link clicável** (contagem → modal, "ver detalhes", etc.) = diretiva **`dmLinkButton`** do DS (cor `text-secondary-700`) — **não** `text-primary-500`, nem cor hardcoded `text-[#0075FF]`, nem `hover:underline` custom.
 - 🚩 Anti-padrões: ações "Visualizar"+"Editar"; ícone `eye`; botão "Vincular X"; botão "Cadastrar"/"Enviar" em form; "Cancelar" no footer.
