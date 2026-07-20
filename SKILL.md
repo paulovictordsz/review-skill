@@ -1,6 +1,6 @@
 ---
 name: review-skill
-description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project — both (A) for design-system consistency in the code (toasts incl. "salvo" form vs "inserido/editado" inline, modals incl. danger removal variant, button/action naming, form validation & duplicate-name messages, tables, breadcrumbs, form layout, clickable-count→modal links, tooltip-vs-alert), and (B) verifying the change in the running app (stale bundles, change-detection zones, mock-API signals). Reports what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo", "review em funcionamento/componentes".
+description: Use when asked to review, audit, or check an Angular feature module/branch in the DemarcoDS / Bancodoc.Interface project — both (A) for design-system consistency in the code (toasts incl. "salvo" form vs "inserido/editado" inline, modals incl. danger removal variant and dialog sizing md/lg, button/action naming, form validation & duplicate-name messages, tables incl. first-column-only bold and non-clickable rows, breadcrumbs & app layout, list-screen and form layout, clickable-count→modal links, tooltip-vs-alert), and (B) verifying the change in the running app (stale bundles, change-detection zones, mock-API signals). Reports what is out of standard with the correct pattern and the fix. Triggers on "está no padrão?", "fora do padrão", "padroniza", "revisa o módulo", "review em funcionamento/componentes".
 ---
 
 # DemarcoDS Review (review-skill)
@@ -94,6 +94,8 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
   - **Detecte "alterações não salvas" por VALOR, não por `.dirty`:** compare o estado atual do form com um **baseline capturado no carregamento** (`JSON.stringify` dos valores persistíveis, ignorando controles só-de-UI). Efeitos internos (sync de listas/vigência, `enable()`/`disable()`, `patchValue`) podem sujar o `.dirty` sem edição real do usuário → o modal aparece falso-positivo. Aplique a checagem só em **modo edição**, e re-capture o baseline após salvar.
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `size="md"`, botões `size="sm"`.
 - **Tamanho do modal de confirmação/exclusão:** **`size="md"`** (igual `excluir-cliente-dialog` / `grupo-delete-dialog`). 🚩 `size="sm"` deixa o modal pequeno demais — fora do padrão.
+- **Tamanho do modal de CONTEÚDO (form/upload//detalhe):** **`size="lg"`** — 826px, que é o **824 × 580 Hug** do Figma (`max-h-[580px]` já vem no base do `dm-dialog`). Escala do DS: `sm` 506 · `md` 714 · **`lg` 826** · `xl` 994 · `2xl` 1200 (`libs/ui/src/lib/components/dialog/dialog.component.ts`). 🚩 `xl` só se o conteúdo realmente pedir duas colunas largas; um modal de campo único em `xl` fica esticado. Ao **remover** conteúdo de um modal (ex.: tirar um bloco lateral), **reavalie o `size`** — sobra largura vazia.
+- **Largura do dialog não "pega" sem o host:** o componente do dialog é `display:block` e encolhe até o conteúdo; para o `dm-dialog` alcançar o `max-w` do `size`, a classe do componente aberto via `DmDialogService.open(Componente)` precisa de `host: { class: 'w-full inline-flex justify-center' }`. 🚩 Sem isso o `size` não tem efeito nenhum — é o bug de largura mais recorrente do projeto.
 - **Botão Confirmar do modal (exclusão/confirmação):** **primary preenchido** (sem `color`) — o `color="danger"` do `DmButton` é **ghost** (texto vermelho) e NÃO deve ser usado no confirmar. O vermelho vem só do ícone `trash` + título "Atenção!". (`color="danger"` é válido em **botões de ação/action-bar** como "Remover selecionados", não no confirmar do modal.)
 - **Vinculação:** `dm-data-table` + busca + **alerta** `notify`/`bell` ("É necessário selecionar pelo menos um X para salvar a vinculação.") + botão **"Salvar" sempre ativo**.
 - 🚩 Anti-padrões: `<table>` HTML cru dentro do dialog; modal próprio em vez do componente do DS; botão de vinculação `[disabled]` / rotulado "Vincular X"; alerta removido; `size="sm"` no modal de confirmação; `color="danger"` (ghost) no botão Confirmar.
@@ -120,26 +122,54 @@ Não basta olhar o texto isolado — o particípio correto depende da **ação**
 - `pageSize` padrão **10** (10, 20, 30…).
 - Empty state padrão do DS: **"Ops, não existem registros cadastrados!"**.
 - Usar **`dm-data-table`** do DS.
-- Grep: `signal(50)`, `signal(20)` em pageSize.
+- **Negrito só na PRIMEIRA coluna:** `<span class="line-clamp-2 font-medium [word-break:break-word]">`. Todas as demais células ficam **sem formatação própria** — `<td>{{ valor }}</td>`. 🚩 Qualquer `font-medium`/`font-semibold` fora da 1ª coluna está fora do padrão (referência: as 5 tabelas de `equipamentos` + `servicos/documentos`).
+- **Linha NÃO é clicável:** `<tr>` puro. A ação fica só no dropdown `dots-three` da coluna de ação. 🚩 Anti-padrão: `role="button"` + `tabindex="0"` + `cursor-pointer` + `(click)` na `<tr>` (e o `$event.stopPropagation()` que isso obriga no botão de ação).
+- **Não sobrescreva tipografia/cor da célula:** `text-sm`, `text-gray-700`, `text-gray-900` no `<td>` são redundantes — o DS já aplica em `.dm-table tbody tr td`.
+- ⚠️ **Armadilha de especificidade:** utility class de **cor** no `<td>` (`text-error-700`, `text-warning-700`) **não funciona** — a regra `.dm-table tbody tr td` do DS tem especificidade maior e já define `text-gray-900`. O texto continua cinza e ninguém percebe que o realce está morto. Verifique com `getComputedStyle(td).color` antes de acreditar que funciona. Único precedente de texto colorido em célula no repo é um `<span>` **dentro da 1ª coluna** (`checklists-inspecao`), que escapa da regra por não ser `td`.
+- Grep: `signal(50)`, `signal(20)` em pageSize; `role="button"` em `<tr>`; `font-semibold`/`font-medium` em `<td>`.
 
 ### 6. Navegação / textos
 - Breadcrumb começa pelo módulo (ex.: **"Empresa"**), com chaves i18n quando o resto do app é traduzível.
 - Textos em PT com **acentuação** correta (inclusive seeds da fake-api).
+- **O breadcrumb mora no LayoutComponent do app, não na página.** Padrão idêntico em `servicos`, `empresas`, `equipamentos`, `formularios`, `usuarios` — se um app não tem layout, crie-o em vez de colar `dm-breadcrumb` na página:
+  ```html
+  <dm-device-resolution-warning></dm-device-resolution-warning>
+  <div class="py-8">
+    <dm-breadcrumb>
+      @for (item of breadcrumbs(); track $index) {
+        <dm-breadcrumb-item [url]="item.url">{{ item.label | translate }}</dm-breadcrumb-item>
+      }
+    </dm-breadcrumb>
+  </div>
+  <main class="min-h-[calc(85vh-11.9rem)] rounded-xl bg-white">
+    <router-outlet></router-outlet>
+  </main>
+  ```
+  O componente lê `route.snapshot.data['breadcrumbs']` via `linkedSignal` + `NavigationEnd`; os itens vêm do `data.breadcrumbs` da rota (`[{ label: 'Home' }, { label: 'x.titulo', url: '/x' }] as Breadcrumb[]`), com a página como **filha** da rota do layout.
 
-### 7. Layout dos formulários (página de cadastro/edição)
+### 7. Layout da tela de consulta/listagem
+Referência canônica: **`servicos/documentos/pages/consulta`**. Estrutura de fora pra dentro:
+- `app.component`: `px-8 py-8 md:px-16`
+- `LayoutComponent`: breadcrumb **fora** + `<main>` branco arredondado (ver dimensão 6)
+- página: **`<div class="p-8">`** com `dm-page-header` e, logo abaixo, o card da listagem em **`<div class="mt-6 rounded-lg border border-gray-200 bg-white">`** envolvendo filtros + tabela
+- filtros e data-table internos: cada um em `<div class="flex flex-col gap-8 p-8">`
+- **Título da página e ações/seletores de contexto ficam DENTRO do conteúdo** (no `dm-page-header`, ações no slot `actions`) — nada de barra de contexto solta acima do card.
+- 🚩 Anti-padrões: `grid gap-8 p-8` na página em vez de `p-8` + `mt-6` no card; página sem o `<main>` branco (fica tudo direto no fundo cinza); breadcrumb ausente numa tela de listagem.
+
+### 8. Layout dos formulários (página de cadastro/edição)
 - **Cabeçalho** (`dm-page-header` com botão voltar + título) aparece em **criação E edição** — `Novo X` ao criar, `Gerenciar X` ao editar. 🚩 Anti-padrão: header dentro de `@if (isCreateMode)` → some na edição (botão voltar + título desaparecem).
 - **Espaçamento:** grids de campos e seções usam **`gap-8` / `space-y-8`** (32px), padrão do cadastro de programas. 🚩 `gap-4`/`space-y-4` (16px) está fora do padrão. (Não confundir com `space-y-1` de label/hint.)
 - **Footer:** ver dimensão 3 (`bg-neutral-50`, só "Salvar").
 - Grep: `@if (isCreateMode)` em volta de `dm-page-header`; `grid gap-4`, `space-y-4` nos forms.
 
-### 8. Contagem clicável → modal com os itens
+### 9. Contagem clicável → modal com os itens
 - Em listagens/tabelas (**exceto** tabelas dentro de modais), toda **célula que mostra um número de itens vinculados** (Unidades, Usuários, Grupos, Perfis…) deve ser um **link clicável** que abre um modal listando os itens.
 - Link = **`dmLinkButton`** (cor `text-secondary-700`) + ícone **`arrow-line-up-right`** (`source="ph" [size]="16"`); renderiza só quando `> 0` (senão "0" puro).
 - Modal = `dm-data-table` paginada (título + subtítulo = nome do registro) + `[Cancelar]`. Um único dialog genérico reutilizável (ex.: `RelatedItemsDialogComponent`) atende todas as colunas. Referência: `programas` (consulta → "Unidades vinculadas").
 - Dados: resolva ids→nomes pelas listas-mestre do store quando a linha já traz os ids; quando a linha só tem a **contagem** (sem ids), crie endpoint/fetch para buscar os itens.
 - 🚩 Anti-padrões: número como texto puro não-clicável; link com cor própria (`text-primary-500`, `text-[#0075FF]`) em vez de `dmLinkButton`/`secondary-700`.
 
-### 9. Info contextual: tooltip no título, não alert
+### 10. Info contextual: tooltip no título, não alert
 - Informação de apoio **não-obrigatória** ao lado de um título de seção → **tooltip** no padrão DS: `<div [dmTooltip]="…" tooltipPosition="right"><dm-icon name="info" source="ph" [size]="16"></dm-icon></div>` — **não** um `dm-alert` ocupando espaço fixo. Referência: `programas` ("Conteúdo do programa ⓘ").
 - `dm-alert` (`notify`/`bell`) permanece para **ação requerida** (ex.: alerta dentro do modal de vinculação: "É necessário selecionar pelo menos um X…").
 

@@ -48,6 +48,8 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 - **Bloqueio por vínculo:** "Atenção!" + `dm-data-table` paginada dos vinculados + só `[Voltar]`.
 - **Sair sem salvar:** `ExitConfirmationDialogComponent` do DS (primária = "Continuar editando").
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `md`, botões `sm`.
+- **Tamanho:** confirmação = **`md`** (714px); conteúdo (form/upload/detalhe) = **`lg`** (826px = o `824 × 580 Hug` do Figma). `xl` só com conteúdo que peça duas colunas largas.
+- **Largura só funciona com o host:** o componente aberto via `DmDialogService.open()` precisa de `host: { class: 'w-full inline-flex justify-center' }`, senão o `size` não tem efeito.
 - **Vinculação:** `dm-data-table` + busca + alerta `notify`/`bell` + botão **"Salvar" sempre ativo**.
 
 ### Botões / ações
@@ -74,7 +76,13 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 
 ### Tabelas / navegação
 - Título da listagem **"[Item]s cadastrados"**; `pageSize` **10**; empty state "Ops, não existem registros cadastrados!".
-- Breadcrumb começa pelo módulo (ex.: "Empresa"); textos acentuados.
+- **Negrito só na 1ª coluna**; demais células sem formatação própria. **Linha não é clicável** — a ação fica no dropdown `dots-three`.
+- ⚠️ Cor via utility class no `<td>` **não funciona** (a regra `.dm-table tbody tr td` do DS vence por especificidade). Cheque com `getComputedStyle` antes de confiar no realce.
+- Breadcrumb começa pelo módulo (ex.: "Empresa"); textos acentuados. O breadcrumb mora no **LayoutComponent do app**, não na página.
+
+### Layout da tela de consulta/listagem
+- Referência: `servicos/documentos/pages/consulta`. `app.component` `px-8 py-8 md:px-16` → layout com breadcrumb fora + `<main>` branco → página **`p-8`** → card da listagem **`mt-6 rounded-lg border border-gray-200 bg-white`** (filtros + tabela, cada um `flex flex-col gap-8 p-8`).
+- Título e seletores de contexto ficam **dentro** do conteúdo, no `dm-page-header` (ações no slot `actions`).
 
 > ⚠️ A skill separa **inconsistência de Design System** de **regra de negócio** (ex.: "um grupo pode ser excluído com vínculo" é decisão de produto, não desvio de DS).
 
