@@ -48,7 +48,7 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 - **Bloqueio por vínculo:** "Atenção!" + `dm-data-table` paginada dos vinculados + só `[Voltar]`.
 - **Sair sem salvar:** `ExitConfirmationDialogComponent` do DS (primária = "Continuar editando").
 - **Confirmação genérica:** `dm-dialog-alert-template`, dialog `md`, botões `sm`.
-- **Tamanho:** confirmação = **`md`** (714px); conteúdo (form/upload/detalhe) = **`lg`** (826px = o `824 × 580 Hug` do Figma). `xl` só com conteúdo que peça duas colunas largas.
+- **Tamanho:** confirmação = **`md`** (714px). Conteúdo: **⚠️ em aberto** — o código tem 32 modais em `xl` (inclusive o módulo de referência) contra 17 em `lg`, e o Figma indica `lg` (824×580). Não migre nem reporte como desvio até o design decidir.
 - **Largura só funciona com o host:** o componente aberto via `DmDialogService.open()` precisa de `host: { class: 'w-full inline-flex justify-center' }`, senão o `size` não tem efeito.
 - **Vinculação:** `dm-data-table` + busca + alerta `notify`/`bell` + botão **"Salvar" sempre ativo**.
 
