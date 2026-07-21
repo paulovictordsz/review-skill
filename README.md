@@ -83,6 +83,10 @@ O módulo auditado deve **espelhar** essas referências, não reinventar compone
 ### Layout da tela de consulta/listagem
 - Referência: `servicos/documentos/pages/consulta`. `app.component` `px-8 py-8 md:px-16` → layout com breadcrumb fora + `<main>` branco → página **`p-8`** → card da listagem **`mt-6 rounded-lg border border-gray-200 bg-white`** (filtros + tabela, cada um `flex flex-col gap-8 p-8`).
 - Título e seletores de contexto ficam **dentro** do conteúdo, no `dm-page-header` (ações no slot `actions`).
+- ⚠️ Confira o wrapper `p-8` nos **dois** (filtros **e** data-table) — é comum só o de filtros existir, e aí a tabela encosta nas bordas do card.
+- **`<h3>` "Listagem de [entidade]"** acima do `dm-data-table`, dentro do wrapper — presente em 7 de 7 telas de consulta.
+- **Filtros:** contagem de colunas do grid varia por tela (não é desvio); nenhum campo simples ocupa a linha inteira; **intervalo de datas é um bloco único** (rótulo do período + dois campos lado a lado com `[min]`/`[max]` cruzados), e é o bloco que leva o `col-span-2`.
+- ⚠️ `dm-datepicker` **não tem input `id`** — `<label for>` apontando para ele nunca associa. Use `<dm-label>`.
 
 > ⚠️ A skill separa **inconsistência de Design System** de **regra de negócio** (ex.: "um grupo pode ser excluído com vínculo" é decisão de produto, não desvio de DS).
 

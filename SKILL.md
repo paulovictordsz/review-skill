@@ -156,8 +156,29 @@ Referência canônica: **`servicos/documentos/pages/consulta`**. Estrutura de fo
 - `app.component`: `px-8 py-8 md:px-16`
 - `LayoutComponent`: breadcrumb **fora** + `<main>` branco arredondado (ver dimensão 6)
 - página: **`<div class="p-8">`** com `dm-page-header` e, logo abaixo, o card da listagem em **`<div class="mt-6 rounded-lg border border-gray-200 bg-white">`** envolvendo filtros + tabela
-- filtros e data-table internos: cada um em `<div class="flex flex-col gap-8 p-8">`
+- filtros e data-table internos: **cada um** em `<div class="flex flex-col gap-8 p-8">`. ⚠️ Confira os **dois** — é comum o card de filtros ter o wrapper e o data-table não, e aí a tabela encosta nas bordas do card. Grep: `.html` do data-table começando direto em `<dm-data-table` em vez do `<div class="flex flex-col gap-8 p-8">`.
+- **`<h3>` de listagem acima do `dm-data-table`:** `<h3 class="text-xl font-semibold text-gray-900">Listagem de [entidade]</h3>` como **primeiro filho do wrapper**. Verificado em **7 de 7** telas de consulta (`servicos/documentos`, `empresas/clientes` e as 5 de `equipamentos`) — é regra, não exceção. Coexiste com o `[title]`/`[description]` do próprio `dm-data-table` (ex.: h3 "Listagem de documentos" + title "Documentos" + desc "Documentos cadastrados no sistema").
 - **Título da página e ações/seletores de contexto ficam DENTRO do conteúdo** (no `dm-page-header`, ações no slot `actions`) — nada de barra de contexto solta acima do card.
+
+**Card de filtros — grid e intervalos de data:**
+- O número de colunas do grid **varia legitimamente** por tela (`lg:grid-cols-2`, `-3`, `-4`, conforme a quantidade de campos) — não reporte isso como desvio. Padrão é o `grid gap-8 pb-8`.
+- 🚩 **Nenhum campo simples deve ocupar a linha inteira.** Um `col-span` na Busca a deixa sozinha no topo e desequilibra o resto do grid. Em `pendencias` e `documentos` a busca flui como célula normal.
+- **Intervalo de datas = UM bloco, não dois campos soltos.** Dois datepickers independentes ("X de" / "X até") deixam órfão na última linha e não impedem intervalo invertido. O padrão é um bloco único com rótulo do período e os dois campos lado a lado, com `[min]`/`[max]` cruzados:
+  ```html
+  <div class="flex flex-col gap-2 lg:col-span-2">
+    <dm-label>{{ 'x.filtro.campos.periodoDeposito' | translate }}</dm-label>
+    <div class="grid grid-cols-2 gap-4">
+      <dm-form-field>
+        <dm-datepicker formControlName="depositoDe" [max]="form.controls.depositoAte.value" [placeholder]="…início" />
+      </dm-form-field>
+      <dm-form-field>
+        <dm-datepicker formControlName="depositoAte" [min]="form.controls.depositoDe.value" [placeholder]="…fim" />
+      </dm-form-field>
+    </div>
+  </div>
+  ```
+  É o **bloco** que leva o `col-span-2` (não a busca) — costuma fechar o grid em linhas cheias.
+- ⚠️ **`dm-datepicker` NÃO expõe input `id`** (só `placeholder`, `format`, `class`, `min`, `max`). Um `<label dmLabel for="x">` + `<dm-datepicker id="x">` põe o id no host do componente, que **não é elemento rotulável** — a associação label↔campo nunca acontece (clicar no rótulo não foca; leitor de tela não anuncia). Use **`<dm-label>`** sem `for`. (`dm-select` é diferente: tem `htmlId` de verdade.)
 - 🚩 Anti-padrões: `grid gap-8 p-8` na página em vez de `p-8` + `mt-6` no card; página sem o `<main>` branco (fica tudo direto no fundo cinza); breadcrumb ausente numa tela de listagem.
 
 ### 8. Layout dos formulários (página de cadastro/edição)
@@ -188,6 +209,8 @@ Sempre listar também o que **já está conforme**, para dar confiança.
 - Inferir o "padrão" a partir do próprio módulo auditado → sempre ancorar em `libs/ui` + `empresas`/`servicos`.
 - Marcar como desvio algo que é decisão de produto (ex.: grupo permite "Excluir mesmo assim") → separar **inconsistência de DS** de **regra de negócio**.
 - Esquecer de varrer os **dialogs compartilhados** (`shared/ui/components`), não só as páginas.
+- **Verificar o padrão em UM lugar e generalizar para os vizinhos** — o erro mais caro deste review. Casos reais: confirmar que o card de *filtros* tinha o wrapper `p-8` e dar a dimensão inteira como conforme, sem abrir o *data-table* (que era o único de 7 telas sem ele); e comparar a contagem de colunas do grid entre telas, ver que varia, e concluir que ali não havia padrão a cobrar — quando o padrão estava no **agrupamento do intervalo de datas**, não na contagem. Regra: **um elemento verificado ≠ a dimensão verificada**. Abra cada arquivo que a dimensão cobre.
+- **Contar quantas telas seguem o padrão antes de chamá-lo de padrão** — "7 de 7 telas de consulta têm o `<h3>` de listagem" é evidência; "o `documentos` tem" é anedota. Inversamente, se o repo diverge (32 modais em `xl` vs 17 em `lg`), isso é sinal de **questão em aberto**, não de desvio a corrigir.
 - **Auditar só QUAL componente do DS foi usado e esquecer os PROPS de detalhe** — usar o componente certo com prop errado **ainda é desvio**. Para cada componente do DS confira: dialog `size` (confirmação = `md`, não `sm`; conteúdo: ver ⚠️ na dimensão 2 — em aberto) **e o `host` que faz o `size` valer**, botão `color`/`size` (Confirmar de modal = primary preenchido, não `danger` ghost), `dm-icon` `source`/`name`/`[size]`, variante do `dm-alert` (`notify`/`bell` p/ ação vs `info` p/ contexto), colunas/larguras da `dm-data-table`. Grep sugerido: `size="sm"` em `dm-dialog` de confirmação; `color="danger"` no botão de confirmar.
 
 ---
